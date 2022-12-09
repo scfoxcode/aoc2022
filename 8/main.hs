@@ -27,15 +27,18 @@ visibleFromAny grid x y =
 -- Part 2
 
 -- dont think I trust find index like this
-counter :: Int -> [Int] -> In-- t
+-- I've done this 2 different ways, still no dice...
+counter :: Int -> [Bool] -> Int
+counter index blocksView
+    | index >= (length blocksView) = index 
+    | otherwise =
+        if (blocksView !! index) == True
+        then index + 1
+        else counter (index + 1) blocksView
 
 treesInDir :: [String] -> (Int -> Bool) -> [Int] -> Int 
 treesInDir grid testFn vals =
-    case ans of
-        Just a -> a + 1
-        Nothing -> 0 
-    where
-        ans = findIndex (== True) (map testFn vals) 
+    counter 0 (map testFn vals)
 
 scenicScore :: [String] -> Int -> Int -> Int 
 scenicScore grid x y
@@ -67,7 +70,7 @@ main = do
     let visible = [visibleFromAny grid x y | x <- [0..width], y <- [0..height]]
     let sceneScores = [scenicScore grid x y | x <- [0..width], y <- [0..height]]
     let numVisible = length $ filter (\a -> a == True) visible
+
     putStrLn ("Num trees " ++ (show ((width + 1) * (height + 1))))
     putStrLn ("Number visible: " ++ (show numVisible))
     putStrLn ("Highest Scenic Score: " ++ (show $ maxNum sceneScores))
-
