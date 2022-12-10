@@ -5,22 +5,33 @@ tailLocations = {
     "0_0": True
 }
 
-def requiresDiagonal(posA, posB):
-    diffX = posA[0] != posB[0]
-    diffY = posA[1] != posB[1]
-    return diffX and diffY 
-
 def posForDiagonal(posA, posB):
-    diffX = posA[0] - posB[0]
-    diffY = posA[1] - posB[1]
-    x = (posB[0] + 1) if diffX > 0 else (posB[0] - 1);
-    y = (posB[1] + 1) if diffY > 0 else (posB[1] - 1);
+    x = (posB[0] + 1) if (posA[0] > posB[0]) else (posB[0] - 1);
+    y = (posB[1] + 1) if (posA[1] > posB[1]) else (posB[1] - 1);
     return (x, y) 
+
+def posForLinear(posA, posB):
+    if posA[0] > posB[0]:
+        return (posB[0] + 1, posB[1])
+    if posA[0] < posB[0]:
+        return (posB[0] - 1, posB[1])
+    if posA[1] > posB[1]:
+        return (posB[0], posB[1] + 1)
+    if posA[1] < posB[1]:
+        return (posB[0], posB[1] - 1)
+
 
 def isAdjacent(posA, posB):
     diffX = abs(posA[0] - posB[0])
     diffY = abs(posA[1] - posB[1])
-    return diffX < 2 and diffY < 2
+    return (diffX < 2 and diffY < 2)
+
+def requiresDiagonal(posA, posB):
+    if isAdjacent(posA, posB):
+        return False
+    diffX = posA[0] != posB[0]
+    diffY = posA[1] != posB[1]
+    return (diffX and diffY)
 
 def updateKnots(newNext, oldNext, index):
     global knots 
@@ -39,9 +50,11 @@ def updateKnots(newNext, oldNext, index):
     if isAdjacent(newNext, curPos):
         return 
     else:
-        newPos = deepcopy(oldNext)
+        newPos = (0, 0) 
         if requiresDiagonal(newNext, curPos):
             newPos = posForDiagonal(newNext, curPos)
+        else:
+            newPos = posForLinear(newNext, curPos)
 
         knots[index] = newPos
         
@@ -61,7 +74,6 @@ def moveHead(direction):
     if direction == "R":
         vec = (1, 0)
 
-    # It's not this simple, only update tail if new pos is not adjacent to head
     global knots 
     newPos = (knots[0][0] + vec[0], knots[0][1] + vec[1])
     updateKnots(newPos, deepcopy(knots[0]), 0)
@@ -84,25 +96,30 @@ def drawTails():
                 print(".", end="")
         print("")
 
-with open('input2.txt') as f:
-    lines = f.readlines()
+def runTest(name, filepath, numknots, expected=0):
+    global knots
+    global tailLocations
 
-    # Part 1 ans 6314
-    knots = [(0, 0)] * 2
-    for line in lines:
-        applyInstruction(line)
-    print("Part 1 Num spots: ", len(tailLocations))
+    with open(filepath) as f:
+        lines = f.readlines()
+        knots = [(0, 0)] * numknots 
+        tailLocations = {
+            "0_0": True
+        }
+        for line in lines:
+            applyInstruction(line)
+        ans = len(tailLocations)
+        f.close()
+        if expected != 0:
+            msg = 'Pass' if ans == expected else 'FAIL'
+            print('{} - {}, ans: {}, expected {}'.format(msg, name, ans, expected))
+        else:
+            print('{} - {}'.format(name, ans))
 
-    # Part 2 ans 3385 too high
-    print("Start Part 2")
-    knots = [(0, 0)] * 10 
-    tailLocations = {
-        "0_0": True
-    }
-    for line in lines:
-        applyInstruction(line)
-    print("Part 2 Num spots: ", len(tailLocations))
-    drawTails()
+def main():
+    runTest('Part 1', 'input.txt', 2, 6314)
+    runTest('Test 2', 'input2.txt', 10, 36)
+    runTest('Part 2', 'input.txt', 10)
+    #drawTails()
 
-    f.close()
-
+main()
