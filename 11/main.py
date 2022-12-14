@@ -13,7 +13,18 @@ class Monkey:
         item = self.items[0]
         newworry = self.operation(item) # worry increase as monkey inspects
         #newworry = int(newworry / 3) # reduce worry after no damage
+
         target = 0 if (newworry % self.testval) == 0 else 1
+        # hack for part 2
+        mnext = monkeys[self.throwto[target]]
+        shouldpass = (mnext.operation(newworry) % mnext.testval) == 0
+        temp = (newworry / self.testval)
+        doespass = (mnext.operation(temp) % mnext.testval) == 0
+        newworry = temp if shouldpass == doespass else newworry
+
+        # end hack for part 2
+
+
         monkeys[self.throwto[target]].addItem(newworry)
         self.items.pop(0)
         self.inspected += 1
