@@ -1,4 +1,5 @@
 import sys
+import functools
 
 def packetFromInput(line):
     packet = [] 
@@ -77,62 +78,63 @@ def testPacketFromInput():
     print('Lines read perfectly')
     
 
-def orderCorrect(packet1, packet2, depth=0):
+def orderCorrect(packet1, packet2):
     for i, item1 in enumerate(packet1):
         if i < len(packet2):
             item2 = packet2[i]
         else:
-            return False # Right side has ran out of items, return false
+            return -1# Right side has ran out of items, return false
 
         t1 = type(item1)
         t2 = type(item2)
         if t1 != list and t2 != list:
             if item1 < item2:
-                return True 
+                return 1 
             elif item1 > item2:
-                return False
+                return -1 
         else:
             list1 = item1 if t1 == list else [item1]
             list2 = item2 if t2 == list else [item2]
-            result = orderCorrect(list1, list2, depth+1)
-            if result != None:
+            result = orderCorrect(list1, list2)
+            if result != 0:
                 return result
 
     if len(packet1) < len(packet2):
-        return True
+        return 1 
     else:
-        return True if depth == 0 else None
+        return 0
+        #return 1 if depth == 0 else None
 
 def testOrderCorrect():
     print ('ORDER CORRECT TEST')
     tests = [
         # true tests first
-        (([], []), True),
-        (([], [1]), True),
-        (([1], [1]), True),
-        (([1], [2]), True),
-        (([], [[]]), True),
-        (([], [[[]]]), True),
-        (([], [[[1]]]), True),
-        (([[2]], [[[3]]]), True),
-        (([1, 2], [2, 4]), True),
-        (([[4, 4], 4, 4], [[4, 4], 4, 4, 4]), True),
-        (([[1], [2, 3, 4]], [[1], 4]), True),
-        (([[[0,[5,0,6,8],1,[],1],[8],5,4],[[2,9]],[[9,[10]]],[]], [[10,[[3],[10,3,7,10,7],1,9],[3]]]), True),
-        (([[5], [6]], [5, [[[[[[8]]]]]]]), True),
-        (([[[],7]], [[4],[[0,3,10,[0]]],[[0]],[7,[7],1,8],[]]), True),
+        (([], []), 0),
+        (([], [1]), 1),
+        (([1], [1]), 0),
+        (([1], [2]), 1),
+        (([], [[]]), 1),
+        (([], [[[]]]), 1),
+        (([], [[[1]]]), 1),
+        (([[2]], [[[3]]]), 1),
+        (([1, 2], [2, 4]), 1),
+        (([[4, 4], 4, 4], [[4, 4], 4, 4, 4]), 1),
+        (([[1], [2, 3, 4]], [[1], 4]), 1),
+        (([[[0,[5,0,6,8],1,[],1],[8],5,4],[[2,9]],[[9,[10]]],[]], [[10,[[3],[10,3,7,10,7],1,9],[3]]]), 1),
+        (([[5], [6]], [5, [[[[[[8]]]]]]]), 1),
+        (([[[],7]], [[4],[[0,3,10,[0]]],[[0]],[7,[7],1,8],[]]), 1),
 
-        (([[5], [6]], [5, [[[[[[4]]]]]]]), False),
-        (([1], []), False),
-        (([2], [1]), False),
-        (([[[4]]], [3]), False),
-        (([[4]], [[[3]]]), False),
-        (([1, 1, 1], [1, 1]), False),
-        (([9], [[8, 7, 6]]), False),
-        (([7, 7, 7, 7], [7, 7, 7]), False),
-        (([[[]]], [[]]), False),
-        (([[]], []), False),
-        (([1,[2,[3,[4,[5,6,7]]]],8,9], [1,[2,[3,[4,[5,6,0]]]],8,9]), False),
+        (([[5], [6]], [5, [[[[[[4]]]]]]]), -1),
+        (([1], []), -1),
+        (([2], [1]), -1),
+        (([[[4]]], [3]), -1),
+        (([[4]], [[[3]]]), -1),
+        (([1, 1, 1], [1, 1]), -1),
+        (([9], [[8, 7, 6]]), -1),
+        (([7, 7, 7, 7], [7, 7, 7]), -1),
+        (([[[]]], [[]]), -1),
+        (([[]], []), -1),
+        (([1,[2,[3,[4,[5,6,7]]]],8,9], [1,[2,[3,[4,[5,6,0]]]],8,9]), -1),
 
     ]
     correct = list(map(lambda p: orderCorrect(p[0][0], p[0][1]), tests)) 
@@ -150,17 +152,27 @@ def part1():
     pairIndex = 0
     for i in range(0, len(packets), 2):
         pairIndex += 1
-        if orderCorrect(packets[i], packets[i+1]) == True:
-
+        if orderCorrect(packets[i], packets[i+1]) > 0:
             correct += pairIndex 
-            indices.append(pairIndex)
     print ('Part 1 Answer = {}'.format(correct))
-    print (indices)
+
+def part2():
+    with open('input.txt') as f:
+        lines = f.read().splitlines()
+        packets = list(map(packetFromInput, filter(lambda l: l != "", lines)))
+        f.close()
+    packets.append([[2]])
+    packets.append([[6]])
+    packets.sort(key=functools.cmp_to_key(orderCorrect), reverse=True)
+    first = packets.index([[2]]) + 1
+    second = packets.index([[6]]) + 1
+    print ('Part 2 Answer = {} x {} = {}', first, second, first * second)
 
 def main():
     print('Aoc day 13')
-    #testPacketFromInput()
+    testPacketFromInput()
     testOrderCorrect()
-    part1() # 2804 is wrong :( 
+    part1() # 4894 is right 
+    part2()
 
 main()
