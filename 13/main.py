@@ -64,7 +64,20 @@ def testPacketFromInput():
     for i, packet in enumerate(packets):
         print ('{} - packet test: {} res: {}'.format('PASS' if packet == ans[i] else 'FAIL', i, packet))
 
-def orderCorrect(packet1, packet2):
+   # compare agains the real input 
+    with open('input.txt') as f:
+        lines = f.read().splitlines()
+        packets = list(map(packetFromInput, filter(lambda l: l != "", lines)))
+        f.close()
+    modifiedLines = list(map(lambda l: l.replace(',', ', '), filter(lambda l: l != "", lines)))
+    for i,p in enumerate(packets):
+        if str(p) != modifiedLines[i]:
+            print('FAILED MATCHING INPUT')
+            return
+    print('Lines read perfectly')
+    
+
+def orderCorrect(packet1, packet2, depth=0):
     for i, item1 in enumerate(packet1):
         if i < len(packet2):
             item2 = packet2[i]
@@ -81,8 +94,14 @@ def orderCorrect(packet1, packet2):
         else:
             list1 = item1 if t1 == list else [item1]
             list2 = item2 if t2 == list else [item2]
-            return orderCorrect(list1, list2)
-    return True
+            result = orderCorrect(list1, list2, depth+1)
+            if result != None:
+                return result
+
+    if len(packet1) < len(packet2):
+        return True
+    else:
+        return True if depth == 0 else None
 
 def testOrderCorrect():
     print ('ORDER CORRECT TEST')
@@ -99,7 +118,11 @@ def testOrderCorrect():
         (([1, 2], [2, 4]), True),
         (([[4, 4], 4, 4], [[4, 4], 4, 4, 4]), True),
         (([[1], [2, 3, 4]], [[1], 4]), True),
+        (([[[0,[5,0,6,8],1,[],1],[8],5,4],[[2,9]],[[9,[10]]],[]], [[10,[[3],[10,3,7,10,7],1,9],[3]]]), True),
+        (([[5], [6]], [5, [[[[[[8]]]]]]]), True),
+        (([[[],7]], [[4],[[0,3,10,[0]]],[[0]],[7,[7],1,8],[]]), True),
 
+        (([[5], [6]], [5, [[[[[[4]]]]]]]), False),
         (([1], []), False),
         (([2], [1]), False),
         (([[[4]]], [3]), False),
@@ -114,26 +137,30 @@ def testOrderCorrect():
     ]
     correct = list(map(lambda p: orderCorrect(p[0][0], p[0][1]), tests)) 
     for i, res in enumerate(correct):
-        print ('{} - order test: {} res: {}'.format('PASS' if res == tests[i][1] else 'FAIL', i, tests[i][0]))
+        print ('{} - order test: {} res: {} ans: {}'.format('PASS' if res == tests[i][1] else 'FAIL', i, tests[i][0], res))
         
 def part1():
     pairs = []
     correct = 0
+    indices = []
     with open('input.txt') as f:
         lines = f.read().splitlines()
         packets = list(map(packetFromInput, filter(lambda l: l != "", lines)))
         f.close()
-    pairIndex = 1
+    pairIndex = 0
     for i in range(0, len(packets), 2):
-        if orderCorrect(packets[i], packets[i+1]):
-            correct += pairIndex 
         pairIndex += 1
+        if orderCorrect(packets[i], packets[i+1]) == True:
+
+            correct += pairIndex 
+            indices.append(pairIndex)
     print ('Part 1 Answer = {}'.format(correct))
+    print (indices)
 
 def main():
     print('Aoc day 13')
-    testPacketFromInput()
+    #testPacketFromInput()
     testOrderCorrect()
-    part1() # 5509 is too high 
+    part1() # 2804 is wrong :( 
 
 main()
