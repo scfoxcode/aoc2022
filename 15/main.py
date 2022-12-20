@@ -30,6 +30,7 @@ class Board():
         self.beacons.append(beacon)
 
     def cantBeBeaconCount(self, row):
+        count = 0
         xMin =  100000000
         xMax = -100000000
         manhatMax = 0
@@ -39,35 +40,22 @@ class Board():
                 xMin = s.x
             if s.x > xMax:
                 xMax = s.x
+            if s.closestDistance > manhatMax:
+                manhatMax = s.closestDistance
+        xMin -= manhatMax
+        xMax += manhatMax
+
+        # marginally faster but still wrong answer and still terribly slow
+        for i in range(xMin, xMax + 1):
+            position = Position(i, row)
+            for s in self.sensors:
+                dist = Position.dist(position, s)
+                if dist < s.closestDistance:
+                    count += 1 
+                    break
+
         print('Beacons')
-
-    def couldPositionContainBeacon(self, position):
-        for sensor in self.sensors:
-            # check if sensor is in this square
-            #if sensor.x == position.x and sensor.y == position.y:
-            #    return False
-
-            dist = Position.dist(position, sensor)
-            if dist < sensor.closestDistance:
-                return False
-
-        return True
-
-    def minX(self):
-        smallest = 100000000
-        positions = self.sensors + self.beacons
-        for p in positions:
-            if p.x < smallest:
-                smallest = p.x
-        return smallest
-
-    def maxX(self):
-        biggest = -100000000
-        positions = self.sensors + self.beacons
-        for p in positions:
-            if p.x > biggest:
-                biggest = p.x
-        return biggest 
+        return count
 
 def readBoard(filepath):
     board = Board()
@@ -86,14 +74,7 @@ def readBoard(filepath):
 
 def part1():
     board = readBoard('input.txt')
-    minX = board.minX() 
-    maxX = board.maxX() + 1 
-    cannotBeCount = 0 
-    # ungodly slow, but also wrong answer. I don't want to fix first part until I get the second
-    for i in range(minX, maxX):
-        if not board.couldPositionContainBeacon(Position(i, 2000000)):
-            cannotBeCount += 1
-
+    cannotBeCount = board.cantBeBeaconCount(2000000) 
     # 5870798 is too low... really?
     print('Part 1 ans', cannotBeCount)
 
