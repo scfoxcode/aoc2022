@@ -9,6 +9,9 @@ class Position:
     def dist(a, b):
         return int(abs(a.x - b.x) + abs(a.y - b.y))
 
+    def hash(self):
+        return '{}_{}'.format(self.x, self.y)
+
 class Beacon(Position):
     pass
 
@@ -22,18 +25,21 @@ class Board():
     def __init__(self):
         self.sensors = []
         self.beacons = []
+        self.gridHash = {}
 
     def addSensor(self, sensor):
         self.sensors.append(sensor)
+        self.gridHash[sensor.hash()] = True
 
     def addBeacon(self, beacon):
         self.beacons.append(beacon)
+        self.gridHash[beacon.hash()] = True
 
     def cantBeBeaconCount(self, row):
-        count = 0
         xMin =  100000000
         xMax = -100000000
         manhatMax = 0
+
         # Find the max number of positions in the row we would need to test
         for s in self.sensors:
             if s.x < xMin:
@@ -42,20 +48,31 @@ class Board():
                 xMax = s.x
             if s.closestDistance > manhatMax:
                 manhatMax = s.closestDistance
+
         xMin -= manhatMax
         xMax += manhatMax
 
-        # marginally faster but still wrong answer and still terribly slow
-        for i in range(xMin, xMax + 1):
-            position = Position(i, row)
-            for s in self.sensors:
-                dist = Position.dist(position, s)
-                if dist < s.closestDistance:
-                    count += 1 
-                    break
+        # All positions, sorted by x position
+        #positions = list(map(lambda x: Position(x, row), range(xMin, xMax + 1)))
+        notAllowed = {}
+
+        # See which sensors cover the position
+        # use spation partitioning so we don't need to check them all
+        for sensor in self.sensors:
+            yDiff = abs(sensor.y - row)
+            xRadius = sensor.closestDistance - yDiff
+            if xRadius <= 0:
+                continue # This sensor does not overlap with any positions
+            xStart = sensor.x - xRadius 
+            xEnd = sensor.x + xRadius
+            for x in range(xStart, xEnd + 1):
+                pos = Position(x, row) 
+                hash = pos.hash()
+                if hash not in notAllowed:
+                    notAllowed[hash] = True
 
         print('Beacons')
-        return count
+        return len(notAllowed) 
 
 def readBoard(filepath):
     board = Board()
